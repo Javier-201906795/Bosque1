@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<krpano version="1.19">
+
+    
+  <!-- Spot Style - Default Point Spot Style -->
+  <style name="IconDefaultPointSpotStyle"
+         url="%FIRSTXML%/spots/hotspot_image_user_defaultpoint0.png"
+         visible="false"
+         onhover="onhoverIconDefaultPointSpotStyle"
+         onout="onoutIconDefaultPointSpotStyle"
+
+
+         />
+
+  <action name="onhoverIconDefaultPointSpotStyle">
+    showtooltip('hotspot');
+  </action>
+
+
+  <action name="onoutIconDefaultPointSpotStyle">
+    hideTooltip();
+
+
+
+  </action>
+
+
+
+<!-- ********** -->
+<!-- Botón WebVR -->
+<!-- id : webvrbutton -->
+<!-- ********** -->
+
+	<layer name="webvrbutton"
+		keep="true"
+		blocked="false"
+		alpha="1"
+		url="%FIRSTXML%/graphics/webvrbutton/btn_webvr.png" 
+		align="topright"
+		x="10"
+		y="10"
+		zorder="1"
+		visible="false"
+		onclick="js(accessWebVr());
+"
+
+		crop="0|0|100|63"
+		/>
+
+	<events name="webvrbuttonevents"
+		onvrunavailable="hidewebvrbutton(true);"
+		onTourStart="showwebvrbutton();"
+		hidetourcontrols="hidewebvrbutton();" 
+		showtourcontrols="showwebvrbutton();" 
+		keep="true" />
+	<action name="hidewebvrbutton">if(%1 == true,set(layer[webvrbutton].blocked, true););set(layer[webvrbutton].visible, false);</action>
+	<action name="showwebvrbutton">if(tour_displaycontrols,if(layer[webvrbutton].blocked == false,set(layer[webvrbutton].visible, true););,hidewebvrbutton(););</action>
+
+
+<!-- ********** -->
+<!-- Radar -->
+<!-- id : radar -->
+<!-- ********** -->
+
+  <layer name="radar" keep="true"
+         url="%FIRSTXML%/graphics/radar.js"
+         align="bottomright"
+         x="50" y="50"
+         heading="0.0"
+         headingoffset="0.0"
+         fillcolor="0xffffff"
+         fillalpha="0.50000762951094835"
+         width="100"
+         height="100"
+         zorder="2"
+         visible="false"
+         active="true"
+         started="false"
+         />
+
+  <events name="radarevents"
+    onnewpano="radarOnNewPano" 
+    onTourStart="set(layer[radar].started, true);showradar();"
+    hidetourcontrols="hideradar();"
+    showtourcontrols="set(layer[radar].started, true);showradar();"
+    keep="true"/>
+
+  <action name="radarOnNewPano">
+    if(scene[get(xml.scene)].planar,
+      set(layer[radar].active, false);
+      hideradar();
+    ,
+      set(layer[radar].active, true);
+      set(layer[radar].heading, get(scene[get(xml.scene)].heading));
+      showradar();
+    );
+  </action>
+
+  <action name="hideradar">set(layer[radar].visible, false);</action>
+  <action name="showradar">if(tour_displaycontrols,if(layer[radar].active AND layer[radar].started,set(layer[radar].visible, true););,hideradar(););</action>
+
+<!-- ********** -->
+<!-- La información se está cargando -->
+<!-- id : loaderinfo -->
+<!-- ********** -->
+
+  <events name="loaderinfoevent" onxmlcomplete="loaderinfoupdate();" keep="true"/>
+
+  <action name="loaderinfoupdate">
+    if(scene[get(xml.scene)].video,
+      set(layer[loaderinfotextfield].visible, false);
+    ,
+      if (progress.progress == 1,
+        delayedcall(0.5, set(layer[loaderinfotextfield].visible, false); );
+      ,
+        set(layer[loaderinfotextfield].visible, true);
+      );
+      mul(progresstext, get(progress.progress),100);
+      roundval(progresstext);
+      txtadd(progresstext, get(progresstext), %);
+      set(layer[loaderinfotextfield].html, get(progresstext));
+      ifnot(progress.progress GE 1, delayedcall(0.01, loaderinfoupdate() ));
+    );
+  </action>
+
+  <layer name="loaderinfotextfield"
+         keep="true"
+         zorder="3"
+         url="%FIRSTXML%/graphics/textfield.swf"
+         align="center"
+         x="0"
+         y="0"
+         borderwidth="0"
+         background="false"
+         autoheight="true"
+         autowidth="auto"
+         capture="false"
+         handcursor="false"
+         selectable="false"
+         alpha="1"
+         visible="true"
+         css="
+         text-align:center;
+         color:#ffffff;
+         font-family:Arial;
+         font-weight:bold;
+         font-size:16px;
+         "
+  />
+
+	<!-- WebVR plugin for VR availability tests -->
+
+	<plugin name="ptpvrmode" devices="html5" keep="true"
+		url="%FIRSTXML%/graphics/webvr.js"
+		mobilevr_support="true"
+		mobilevr_fake_support="false"
+		vr_cursor=""
+		vr_cursor_enabled="false"
+		onavailable="delayedcall(1, checkVrAvailability(););"
+		onunavailable="checkVrUnavailable();"
+		/>
+	<action name="checkVrAvailability">
+		if(plugin[ptpvrmode],
+			if (plugin[ptpvrmode].isavailable,
+				set(tour_vrdevices, true);
+				events.dispatch(onvravailable);
+			,
+				set(tour_vrdevices, false);
+			);
+		,
+			checkVrUnavailable();
+		);
+	</action>
+	<action name="checkVrUnavailable">
+		set(tour_vrdevices, false);
+		events.dispatch(onvrunavailable);
+	</action>
+</krpano>
